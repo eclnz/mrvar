@@ -1,17 +1,33 @@
 #!/bin/bash
 
 # Script to process anatomical MRI scans using process_variance.py
-# Usage: ./downsample_anat.sh
+# Usage: ./downsample_anat.sh <bids_directory>
+
+# Check if BIDS directory is provided
+if [ $# -ne 1 ]; then
+    echo "Error: Please provide the BIDS directory path"
+    echo "Usage: ./downsample_anat.sh <bids_directory>"
+    exit 1
+fi
+
+BIDS_DIR="$1"
+
+# Validate BIDS directory
+if [ ! -d "$BIDS_DIR" ]; then
+    echo "Error: BIDS directory '$BIDS_DIR' does not exist"
+    exit 1
+fi
 
 # Set up logging
 log_file="downsample_anat.log"
 echo "Starting anatomical MRI processing pipeline at $(date)" | tee -a "$log_file"
+echo "Processing BIDS directory: $BIDS_DIR" | tee -a "$log_file"
 
 # Create derivatives directory if it doesn't exist
-mkdir -p derivatives/aMRI
+mkdir -p "$BIDS_DIR/derivatives/aMRI"
 
 # Loop through all subjects
-for subject_dir in raw/sub-*; do
+for subject_dir in "$BIDS_DIR/raw/sub-"*; do
     if [ ! -d "$subject_dir" ]; then
         echo "Skipping $subject_dir - not a directory" | tee -a "$log_file"
         continue
@@ -39,7 +55,7 @@ for subject_dir in raw/sub-*; do
         fi
 
         # Create output directory
-        output_dir="derivatives/aMRI/$subject/$session"
+        output_dir="$BIDS_DIR/derivatives/aMRI/$subject/$session"
         mkdir -p "$output_dir"
 
         # Define output file path

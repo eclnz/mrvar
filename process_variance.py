@@ -5,6 +5,7 @@ import nibabel as nib
 import numpy as np
 from pathlib import Path
 import logging
+from resize import Resize
 
 # Configure logging
 logging.basicConfig(
@@ -56,7 +57,6 @@ def process_nifti(input_path, output_path, downsample=0, clip_percentile=99.9):
     # Downsample if needed
     if downsample > 0:
         logger.info(f"Downsampling with factor {downsample}")
-        from pyqa.resize import Resize
         resizer = Resize(downsample_factor=downsample)
         data = resizer.downsample(data)
         logger.info(f"Downsampled shape: {data.shape}")
