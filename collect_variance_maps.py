@@ -8,8 +8,6 @@ import logging
 from scipy.ndimage import zoom
 import pickle
 from tqdm import tqdm
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 # Configure logging
 logging.basicConfig(
@@ -21,61 +19,6 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
-
-def plot_coronal_slices(group_data, output_dir, slice_idx=None, n_cols=5):
-    """
-    Plot coronal slices from all variance maps.
-    
-    Args:
-        group_data: Dictionary containing variance maps and metadata
-        output_dir: Directory to save the plots
-        slice_idx: Index of coronal slice to plot (if None, uses middle slice)
-        n_cols: Number of columns in the plot grid
-    """
-    variance_maps = group_data['variance_maps']
-    scan_order = group_data['scan_order']
-    
-    # Determine number of rows needed
-    n_scans = len(scan_order)
-    n_rows = (n_scans + n_cols - 1) // n_cols
-    
-    # Create figure
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 4*n_rows))
-    axes = axes.flatten()
-    
-    # If slice_idx not provided, use middle slice
-    if slice_idx is None:
-        slice_idx = variance_maps.shape[3] // 2
-    
-    # Plot each scan
-    for idx, scan_id in enumerate(scan_order):
-        ax = axes[idx]
-        
-        # Get coronal slice
-        coronal_slice = np.transpose(variance_maps[idx, :, :, slice_idx], (1, 0))
-        
-        # Plot with colorbar and flip y-axis
-        im = ax.imshow(coronal_slice, cmap='viridis', aspect='auto', origin='lower')
-        ax.set_title(f"{scan_id}\nSlice {slice_idx}", fontsize=8)
-        ax.axis('off')
-        
-        # Add colorbar
-        plt.colorbar(im, ax=ax, shrink=0.7)
-    
-    # Hide unused subplots
-    for idx in range(len(scan_order), len(axes)):
-        axes[idx].axis('off')
-    
-    # Adjust layout
-    plt.tight_layout()
-    
-    # Save plot
-    output_path = Path(output_dir) / f"coronal_slices_slice{slice_idx}.png"
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    logger.info(f"Saved coronal slice plot to {output_path}")
-    return output_path
 
 def resample_image(img_data, target_shape):
     """Resample image to target shape using zoom."""
@@ -174,10 +117,6 @@ def main():
     parser.add_argument('bids_dir', type=str, help='Path to BIDS directory')
     parser.add_argument('--output-dir', type=str, default='group_variance',
                       help='Output directory for group data (default: group_variance)')
-    parser.add_argument('--plot-slices', action='store_true',
-                      help='Generate coronal slice plots')
-    parser.add_argument('--slice-idx', type=int, default=None,
-                      help='Index of coronal slice to plot (default: middle slice)')
     
     args = parser.parse_args()
     
@@ -196,10 +135,6 @@ def main():
         
         # Save scan order
         save_scan_order(group_data, output_dir)
-        
-        # Generate plots if requested
-        if args.plot_slices:
-            plot_coronal_slices(group_data, output_dir, args.slice_idx)
         
         # Print summary
         print("\nProcessing Summary:")
